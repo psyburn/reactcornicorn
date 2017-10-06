@@ -31,14 +31,28 @@ class Component {
     this.props = props;
   }
 
+  setState(update) {
+    this.state = Object.assign({}, this.state, update);
+  }
+
   render() {
     console.warn('you should really implement this');
   }
 }
 
 class ImageCounter extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      counter: props.counter,
+    }
+  }
+
   render() {
-    const { src, counter } = this.props;
+    const { src } = this.props;
+    const { counter } = this.state;
+
     return createElement('div', {className: 'image-counter'}, [
       createElement('img', {src}, undefined),
       createElement('h1', undefined, [`Corn click: ${counter}`])
