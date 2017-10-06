@@ -6,7 +6,11 @@ function createElement(type, props = {}, children = []) {
   })
 
   children.forEach((item) => {
-    el.innerHTML += item;
+    if (typeof item === 'string') {
+      el.innerHTML += item;
+    } else {
+      el.appendChild(item);
+    }
   });
 
   return el;
@@ -15,17 +19,6 @@ function createElement(type, props = {}, children = []) {
 function render(el, rootEl) {
   rootEl.appendChild(el);
 }
-
-// const ListOfStuff = () => {
-//   return (
-//     <div>
-//       <h1>Wonderful world of unicorns!</h1>
-//       <img src='/assets/images/batman-unicorn.jpg' />
-//       <img src='/assets/images/faticorn.jpg' />
-//     </div>
-//   );
-// }
-
 
 const ListOfStuff = () => {
   return createElement('div', undefined, [
