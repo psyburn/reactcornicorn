@@ -1,11 +1,14 @@
-const Hello = () => {
-  return <span className={'big-and-pretty'}>Hello webcamp!</span>;
+function createElement(type, props = {}, children = []) {
+  const el = document.createElement(type);
+  return el;
 }
 
-ReactDOM.render(Hello(), document.getElementById('root'));
+function render(el, rootEl) {
+  rootEl.appendChild(el);
+}
 
-// const Hello = () => {
-//   return createElement('span', {className: 'big-and-pretty' }, [`Hello Webcamp!`]);
-// }
+const Hello = () => {
+  return createElement('span', {className: 'big-and-pretty' }, [`Hello Webcamp!`]);
+}
 
-
+render(Hello(), document.getElementById('root'));
