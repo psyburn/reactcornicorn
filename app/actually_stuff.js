@@ -36,15 +36,24 @@ class Component {
   }
 }
 
-class ListOfStuff extends Component {
+class ImageCounter extends Component {
   render() {
-    return createElement('div', undefined, [
-      createElement('h1', undefined, ['Wonderful world of unicorns!']),
-      createElement('img', { src: '/assets/images/batman-unicorn.jpg'}, undefined),
-      createElement('img', { src: '/assets/images/faticorn.jpg'}, undefined),
+    const { src, counter } = this.props;
+    return createElement('div', {className: 'image-counter'}, [
+      createElement('img', {src}, undefined),
+      createElement('h1', undefined, [`Corn click: ${counter}`])
     ]);
   }
 }
 
-// render(<ListOfStuff />, document.getElementById('root'));
+class ListOfStuff extends Component {
+  render() {
+    return createElement('div', undefined, [
+      createElement('h1', undefined, ['Wonderful world of unicorns!']),
+      createElement(ImageCounter, { src: '/assets/images/batman-unicorn.jpg', counter: 0}, undefined),
+      createElement(ImageCounter, { src: '/assets/images/faticorn.jpg', counter: 0}, undefined),
+    ]);
+  }
+}
+
 render(createElement(ListOfStuff, undefined, undefined), document.getElementById('root'));
