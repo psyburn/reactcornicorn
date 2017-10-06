@@ -7,7 +7,17 @@ function createElement(type, props = {}, children = []) {
     el = document.createElement(type);
   }
 
-  Object.keys(props).forEach((propKey) => {
+  const keys =  Object.keys(props) || [];
+
+  const isEventListener = (item) => (item.indexOf('on') === 0);
+  keys.filter(isEventListener).forEach((propKey) => {
+    const eventName = propKey.toLowerCase().substring(2);
+    el.addEventListener(eventName, props[propKey]);
+  });
+
+  // we don't want to add the event listeners as props
+  const isRealProp = (item) => !isEventListener(item);
+  keys.filter(isRealProp).forEach((propKey) => {
     el[propKey] = props[propKey];
   })
 
@@ -49,12 +59,19 @@ class ImageCounter extends Component {
     }
   }
 
+  onClickHandler() {
+    console.info('CLICKED ON A CORN!', this.state.counter);
+    this.setState({
+      counter: this.state.counter + 1,
+    })
+  }
+
   render() {
     const { src } = this.props;
     const { counter } = this.state;
 
     return createElement('div', {className: 'image-counter'}, [
-      createElement('img', {src}, undefined),
+      createElement('img', {src, onClick: this.onClickHandler.bind(this)}, undefined),
       createElement('h1', undefined, [`Corn click: ${counter}`])
     ]);
   }
