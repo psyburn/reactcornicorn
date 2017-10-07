@@ -1,10 +1,18 @@
-function createElement(type, props = {}, children = []) {
+function createElement(vElement) {
+  const { type, props } = vElement;
+  const { children } = props;
+
   let el;
   if (typeof type === 'function') {
     const comp = new type(props);
-    el = comp.render();
+    const vComEl = comp.render();
+    el = createElement(vComEl);
   } else {
-    el = document.createElement(type);
+    if (type === 'TEXT') {
+      el = document.createTextNode('');
+    } else {
+      el = document.createElement(type);
+    }
   }
 
   const keys =  Object.keys(props) || [];
@@ -16,23 +24,33 @@ function createElement(type, props = {}, children = []) {
   });
 
   // we don't want to add the event listeners as props
-  const isRealProp = (item) => !isEventListener(item);
+  const isRealProp = (item) => !isEventListener(item) && item !== 'children';
   keys.filter(isRealProp).forEach((propKey) => {
     el[propKey] = props[propKey];
   })
 
-  children.forEach((item) => {
-    if (typeof item === 'string') {
-      el.innerHTML += item;
-    } else {
-      el.appendChild(item);
-    }
-  });
+  children.forEach((child) => el.appendChild(createElement(child)));
 
   return el;
 }
 
-function render(el, rootEl) {
+function createText(val) {
+  return createVElement('TEXT', { nodeValue: val });
+}
+
+function createVElement(type, props = {}, children = []) {
+  const parsedChildren = children.map((child) => (typeof child === 'string' ? createText(child) : child));
+  return {
+    type,
+    props: {
+      ...props,
+      children: parsedChildren,
+    }
+  }
+}
+
+function render(vEl, rootEl) {
+  const el = createElement(vEl);
   rootEl.appendChild(el);
 }
 
@@ -70,21 +88,21 @@ class ImageCounter extends Component {
     const { src } = this.props;
     const { counter } = this.state;
 
-    return createElement('div', {className: 'image-counter'}, [
-      createElement('img', {src, onClick: this.onClickHandler.bind(this)}, undefined),
-      createElement('h1', undefined, [`Corn click: ${counter}`])
+    return createVElement('div', {className: 'image-counter'}, [
+      createVElement('img', {src, onClick: this.onClickHandler.bind(this)}, undefined),
+      createVElement('h1', undefined, [`Corn click: ${counter}`])
     ]);
   }
 }
 
 class ListOfStuff extends Component {
   render() {
-    return createElement('div', undefined, [
-      createElement('h1', undefined, ['Wonderful world of unicorns!']),
-      createElement(ImageCounter, { src: '/assets/images/batman-unicorn.jpg', counter: 0}, undefined),
-      createElement(ImageCounter, { src: '/assets/images/faticorn.jpg', counter: 0}, undefined),
+    return createVElement('div', undefined, [
+      createVElement('h1', undefined, ['Wonderful world of unicorns!']),
+      createVElement(ImageCounter, { src: '/assets/images/batman-unicorn.jpg', counter: 0}, undefined),
+      createVElement(ImageCounter, { src: '/assets/images/faticorn.jpg', counter: 0}, undefined),
     ]);
   }
 }
 
-render(createElement(ListOfStuff, undefined, undefined), document.getElementById('root'));
+render(createVElement(ListOfStuff, undefined, undefined), document.getElementById('root'));
