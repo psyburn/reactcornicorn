@@ -4,11 +4,19 @@ function createVInstance(vElement) {
 
   let el;
   if (typeof type === 'function') {
+    const selfVinstance = {};
     const comp = new type(props);
+    comp._selfVInstance = selfVinstance;
     const vComEl = comp.render();
     const comVInstance = createVInstance(vComEl);
     el = comVInstance.el;
-
+    Object.assign(selfVinstance, {
+      el,
+      vElement,
+      childVInstance: comVInstance,
+      component: comp,
+    });
+    return selfVinstance;
   } else {
     if (type === 'TEXT') {
       el = document.createTextNode('');
@@ -81,27 +89,58 @@ function render(vEl, rootEl) {
 }
 
 const beSmart = (currentVInstance, vEl, rootEl) => {
-  const newInstance = createVInstance(vEl);
   if (!currentVInstance) {
+    const newInstance = createVInstance(vEl);
     rootEl.appendChild(newInstance.el);
-    return newInstance
-  } else if (currentVInstance.vElement.type === newInstance.vElement.type) {
+    return newInstance;
+  } else if (!vEl) {
+    rootEl.removeChild(currentVInstance.el);
+    return;
+  } else if (currentVInstance.component) {
+    currentVInstance.component.props = vEl.props;
+    const childElement = currentVInstance.component.render();
+    const oldChildInstance = currentVInstance.childVInstance;
+    const childInstance = beSmart(oldChildInstance, childElement, rootEl);
+    currentVInstance.el = childInstance.el;
+    currentVInstance.childVInstance = childInstance;
+    currentVInstance.vElement = vEl;
+    return currentVInstance;
+  } else if (typeof currentVInstance.vElement.type === 'string') {
     updateProps(currentVInstance.el, currentVInstance.vElement.props, vEl.props);
+    currentVInstance.childVInstances = beSmartWithChildren(currentVInstance, vEl);
     currentVInstance.vElement = vEl;
     return currentVInstance;
   } else {
+    const newInstance = createVInstance(vEl);
     rootEl.replaceChild(newInstance.el, currentVInstance.el);
     return newInstance;
-  }
+  };
 };
+
+const beSmartWithChildren = (currentVInstance, vEl) => {
+  const childVInstances = currentVInstance.childVInstances;
+  const nextChildVElements = vEl.props.children || [];
+  const newChildVInstances = [];
+  const len = Math.max(childVInstances.length, nextChildVElements.length);
+  for (let i = 0; i < len; i++) {
+    const childVInstance = childVInstances[i];
+    const childVElement = nextChildVElements[i];
+    const newChildVInstance = beSmart(childVInstance, childVElement, currentVInstance.el);
+    newChildVInstances.push(newChildVInstance);
+  }
+  return newChildVInstances;
+};
+
 
 class Component {
   constructor(props) {
     this.props = props;
+    this.state = {};
   }
 
   setState(update) {
     this.state = Object.assign({}, this.state, update);
+    beSmart(this._selfVInstance, this._selfVInstance.vElement, this._selfVInstance.el.parentNode);
   }
 
   render() {
