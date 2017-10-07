@@ -17,19 +17,7 @@ function createVInstance(vElement) {
     }
   }
 
-  const keys =  Object.keys(props) || [];
-
-  const isEventListener = (item) => (item.indexOf('on') === 0);
-  keys.filter(isEventListener).forEach((propKey) => {
-    const eventName = propKey.toLowerCase().substring(2);
-    el.addEventListener(eventName, props[propKey]);
-  });
-
-  // we don't want to add the event listeners as props
-  const isRealProp = (item) => !isEventListener(item) && item !== 'children';
-  keys.filter(isRealProp).forEach((propKey) => {
-    el[propKey] = props[propKey];
-  })
+  updateProps(el, [], props);
 
   const childVInstances = children.map(createVInstance);
   childVInstances.forEach((child) => el.appendChild(child.el));
@@ -39,6 +27,34 @@ function createVInstance(vElement) {
     vElement,
     childVInstances,
   };
+}
+
+
+const updateProps = (el, prevProps, nextProps) => {
+  const nextKeys = Object.keys(nextProps) || [];
+  const prevKeys = Object.keys(prevProps) || [];
+  const getEventName = (item) => (item.toLowerCase().substring(2));
+  const isEventListener = (item) => (item.indexOf('on') === 0);
+
+  prevKeys.filter(isEventListener).forEach((propKey) => {
+    const eventName = getEventName(propKey);
+    el.removeEventListener(eventName, prevProps[propKey])
+  });
+
+  nextKeys.filter(isEventListener).forEach((propKey) => {
+    const eventName = getEventName(propKey);
+    el.addEventListener(eventName, nextProps[propKey]);
+  });
+
+  const isRealProp = (item) => !isEventListener(item) && item !== 'children';
+
+  prevKeys.filter(isRealProp).forEach((propKey) => {
+    el[propKey] = undefined;
+  });
+
+  nextKeys.filter(isRealProp).forEach((propKey) => {
+    el[propKey] = nextProps[propKey];
+  })
 }
 
 function createText(val) {
@@ -63,6 +79,9 @@ function render(vEl, rootEl) {
   const newInstance = createVInstance(vEl);
   if (!mainVInstance) {
     rootEl.appendChild(newInstance.el);
+  } else if (mainVInstance.vElement.type === newInstance.vElement.type) {
+    updateProps(mainVInstance.el, mainVInstance.vElement.props, vEl.props);
+    mainVInstance.vElement = vEl;
   } else {
     rootEl.replaceChild(newInstance.el, previousVInstance.el);
   }
