@@ -76,18 +76,24 @@ let mainVInstance;
 
 function render(vEl, rootEl) {
   const previousVInstance = mainVInstance;
-  const newInstance = createVInstance(vEl);
-  if (!mainVInstance) {
-    rootEl.appendChild(newInstance.el);
-  } else if (mainVInstance.vElement.type === newInstance.vElement.type) {
-    updateProps(mainVInstance.el, mainVInstance.vElement.props, vEl.props);
-    mainVInstance.vElement = vEl;
-  } else {
-    rootEl.replaceChild(newInstance.el, previousVInstance.el);
-  }
-
-  mainVInstance = newInstance;
+  const nextInstance = beSmart(previousVInstance, vEl, rootEl);
+  mainVInstance = nextInstance;
 }
+
+const beSmart = (currentVInstance, vEl, rootEl) => {
+  const newInstance = createVInstance(vEl);
+  if (!currentVInstance) {
+    rootEl.appendChild(newInstance.el);
+    return newInstance
+  } else if (currentVInstance.vElement.type === newInstance.vElement.type) {
+    updateProps(currentVInstance.el, currentVInstance.vElement.props, vEl.props);
+    currentVInstance.vElement = vEl;
+    return currentVInstance;
+  } else {
+    rootEl.replaceChild(newInstance.el, currentVInstance.el);
+    return newInstance;
+  }
+};
 
 class Component {
   constructor(props) {
