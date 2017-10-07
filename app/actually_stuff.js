@@ -1,4 +1,4 @@
-function createElement(vElement) {
+function createVInstance(vElement) {
   const { type, props } = vElement;
   const { children } = props;
 
@@ -6,7 +6,9 @@ function createElement(vElement) {
   if (typeof type === 'function') {
     const comp = new type(props);
     const vComEl = comp.render();
-    el = createElement(vComEl);
+    const comVInstance = createVInstance(vComEl);
+    el = comVInstance.el;
+
   } else {
     if (type === 'TEXT') {
       el = document.createTextNode('');
@@ -29,9 +31,14 @@ function createElement(vElement) {
     el[propKey] = props[propKey];
   })
 
-  children.forEach((child) => el.appendChild(createElement(child)));
+  const childVInstances = children.map(createVInstance);
+  childVInstances.forEach((child) => el.appendChild(child.el));
 
-  return el;
+  return {
+    el,
+    vElement,
+    childVInstances,
+  };
 }
 
 function createText(val) {
@@ -45,13 +52,22 @@ function createVElement(type, props = {}, children = []) {
     props: {
       ...props,
       children: parsedChildren,
-    }
+    },
   }
 }
 
+let mainVInstance;
+
 function render(vEl, rootEl) {
-  const el = createElement(vEl);
-  rootEl.appendChild(el);
+  const previousVInstance = mainVInstance;
+  const newInstance = createVInstance(vEl);
+  if (!mainVInstance) {
+    rootEl.appendChild(newInstance.el);
+  } else {
+    rootEl.replaceChild(newInstance.el, previousVInstance.el);
+  }
+
+  mainVInstance = newInstance;
 }
 
 class Component {
